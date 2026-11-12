@@ -1,0 +1,45 @@
+{
+  "model_name": "ECG-Guard V3",
+  "input_length": 77,
+  "class_names": [
+    "Normal",
+    "Supraventricular",
+    "Ventricular",
+    "Fusion"
+  ],
+  "calibration_alpha": 0.17500000000000002,
+  "train_prior": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+  ],
+  "validation_prior": [
+    0.8793989622015099,
+    0.012148636352458008,
+    0.10722278238201804,
+    0.0012296190640139685
+  ],
+  "prior_ratio": [
+    3.5175958488060397,
+    0.04859454540983203,
+    0.4288911295280722,
+    0.004918476256055874
+  ],
+  "raw_test_metrics": {
+    "accuracy": 0.7808191494139309,
+    "balanced_accuracy": 0.5920716426365321,
+    "macro_precision": 0.4034193056072106,
+    "macro_recall": 0.5920716426365321,
+    "macro_f1": 0.40733722476941514
+  },
+  "calibrated_test_metrics": {
+    "accuracy": 0.8654511160012575,
+    "balanced_accuracy": 0.601070802089838,
+    "macro_precision": 0.4065390931443929,
+    "macro_recall": 0.601070802089838,
+    "macro_f1": 0.4244877088272463
+  },
+  "test_samples": 44534,
+  "notes": "Input must be an already-preprocessed, beat-segmented 77-sample waveform. Research prototype only; not for clinical diagnosis."
+}
