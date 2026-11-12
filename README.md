@@ -594,7 +594,7 @@ A batch prediction table contains:
 
 <div align="center">
 
-**ECG-Guard — AI-assisted ECG heartbeat classification**
+**ECG-Guard - AI-assisted ECG heartbeat classification**
 
 *Built as an academic machine-learning and software deployment project.*
 
