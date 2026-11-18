@@ -197,7 +197,7 @@ ECG-Guard/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/ECG-Guard.git
+git clone https://github.com/Samarth041/ECG-Guard.git
 cd ECG-Guard
 ```
 
@@ -246,6 +246,28 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser. API req
 ```bash
 streamlit run app.py
 ```
+
+### Option D: Docker & Cloud Deployment (Render / Hugging Face Spaces)
+A multi-stage `Dockerfile` is included at the repository root (builds the React frontend and serves both the UI and FastAPI API with lightweight CPU-only PyTorch).
+
+**Local Docker:**
+```bash
+docker build -t ecg-guard .
+docker run -p 7860:7860 ecg-guard
+```
+Open **[http://localhost:7860](http://localhost:7860)**.
+
+**Deploy on Render (Free Tier):**
+1. Sign in to [Render](https://render.com) with GitHub → **New** → **Web Service**.
+2. Connect this repository and choose your branch (`main` or `ecg-guard-v2`).
+3. Set **Runtime** to **Docker** and select the **Free** instance type → **Create Web Service**.
+
+**Auto-Deploy to Hugging Face Spaces (Free 2 vCPU / 16 GB RAM):**
+1. Create a new Space on [Hugging Face](https://huggingface.co/new-space) with **SDK = Docker**.
+2. In your GitHub repository → **Settings → Secrets and variables → Actions**, add two repository secrets:
+   - `HF_TOKEN`: Your Hugging Face access token with **Write** permission.
+   - `HF_SPACE_ID`: Your Space ID in the format `<hf-username>/<space-name>`.
+3. Every push to `main` or `ecg-guard-v2` (or manual trigger in the **Actions** tab) will automatically sync and rebuild your Space via `.github/workflows/sync-hf.yml`.
 
 ---
 

@@ -1,0 +1,31 @@
+# Git & IDE
+.git/
+.github/
+.gitignore
+.vscode/
+.idea/
+
+# Python environments & caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+
+# Frontend build artifacts & dependencies (rebuilt inside Stage 1)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Large notebooks & legacy/test files not needed in production container
+*.ipynb
+tests/
+app.py
+.env
+.env.example
+README.md
+.DS_Store
+Thumbs.db
