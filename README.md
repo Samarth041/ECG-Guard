@@ -2,602 +2,343 @@
 
 # 💓 ECG-Guard
 
-### AI-Assisted ECG Heartbeat Classification
+### AI-Assisted ECG Heartbeat Classification & Web Platform
 
-**A four-class ECG beat classification system powered by a 1D Convolutional Neural Network and deployed with Streamlit.**
+**A four-class ECG beat classification system powered by a 1D Convolutional Neural Network (1D CNN), deployed with a FastAPI backend and a modern React + TypeScript + Vite web application (alongside the original Streamlit prototype).**
 
 <p>
-  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" alt="TensorFlow">
-  <img src="https://img.shields.io/badge/Keras-D00000?style=for-the-badge&logo=keras&logoColor=white" alt="Keras">
-  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
-  <img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white" alt="NumPy">
-  <img src="https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white" alt="Pandas">
-  <img src="https://img.shields.io/badge/SciPy-8CAAE6?style=for-the-badge&logo=scipy&logoColor=white" alt="SciPy">
-  <img src="https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white" alt="scikit-learn">
+  <img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS">
+  <img src="https://img.shields.io/badge/TensorFlow%20%2F%20PyTorch-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white" alt="Deep Learning">
+  <img src="https://img.shields.io/badge/Streamlit-Legacy%20UI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
 </p>
 
 </div>
 
 ---
 
+> **IMPORTANT MEDICAL NOTICE**
+> 
+> ECG-Guard is an **academic research and educational prototype**. It is **NOT A MEDICAL DEVICE** and is not certified for clinical diagnosis, patient monitoring, triage, or healthcare decision-making. Do not use its output to evaluate health status. In a medical emergency, contact emergency medical services immediately.
+
+---
+
 ## Table of Contents
 
 1. [Overview](#1-overview)
-2. [Problem Statement](#2-problem-statement)
+2. [Web Application Features](#2-web-application-features)
 3. [System Architecture](#3-system-architecture)
-4. [Dataset](#4-dataset)
-5. [Features](#5-features)
-6. [Tech Stack](#6-tech-stack)
-7. [Project Structure](#7-project-structure)
-8. [Installation](#8-installation)
-9. [How to Run](#9-how-to-run)
-10. [Usage](#10-usage)
-11. [Model Evaluation](#11-model-evaluation)
-12. [Sample Output](#12-sample-output)
-13. [Future Improvements](#13-future-improvements)
-14. [Skills Demonstrated](#14-skills-demonstrated)
-15. [Author](#15-author)
+4. [Dataset & Signal Preprocessing](#4-dataset--signal-preprocessing)
+5. [Model Architecture & Calibration](#5-model-architecture--calibration)
+6. [Project Structure](#6-project-structure)
+7. [Installation & Setup](#7-installation--setup)
+8. [How to Run](#8-how-to-run)
+9. [REST API Documentation](#9-rest-api-documentation)
+10. [Automated Testing](#10-automated-testing)
+11. [Model Evaluation Results](#11-model-evaluation-results)
+12. [Project Contributors](#12-project-contributors)
 
 ---
 
 ## 1. Overview
 
-**ECG-Guard** is an AI-assisted electrocardiogram (ECG) heartbeat classification project. It uses a one-dimensional Convolutional Neural Network (1D CNN) to classify an individual, preprocessed heartbeat into one of four categories:
+**ECG-Guard** is an AI-assisted electrocardiogram (ECG) heartbeat classification project that categorizes preprocessed, isolated single heartbeats into four primary categories derived from the ANSI/AAMI EC57 standard:
 
-| Class ID | Heartbeat class | Description |
-|---:|---|---|
-| 0 | Normal | Normal heartbeat |
-| 1 | Supraventricular | Supraventricular ectopic heartbeat |
-| 2 | Ventricular | Ventricular ectopic heartbeat |
-| 3 | Fusion | Fusion of normal and ventricular beat |
+| Class ID | Heartbeat Class | Clinically Mapped Symbols | Description |
+|---:|---|---|---|
+| **0** | **Normal (N)** | N, L, R, B, e, j | Normal sinus rhythm, bundle branch block beats, escape beats |
+| **1** | **Supraventricular (S)** | A, a, J, S, n | Premature atrial/junctional beats, aberrated supraventricular beats |
+| **2** | **Ventricular (V)** | V, E, r | Premature ventricular contractions (PVCs), ventricular escape, R-on-T |
+| **3** | **Fusion (F)** | F | Hybrid activation combining normal conduction and ventricular ectopic focus |
 
-The selected model, **ECG-Guard V3**, accepts a single-channel waveform containing **77 samples** and returns a predicted class along with class probabilities.
+The project accepts an already-segmented, 77-sample heartbeat window (Lead II, resampled to 128 Hz, Z-score normalized) and returns calibrated output probabilities.
 
-The trained model is integrated into a Streamlit application. Users can upload preprocessed ECG beat data, classify multiple beats in a batch, explore example beats, and view the prediction probabilities and waveform.
+---
 
-> **Important:** ECG-Guard is an academic and educational research prototype. It is not a medical device and must not be used to diagnose, treat, or rule out a medical condition.
+## 2. Web Application Features
 
-## 2. Problem Statement
+The modern web application provides:
 
-An ECG records the electrical activity of the heart and is commonly used to study cardiac rhythm. Different heartbeat patterns can indicate different types of cardiac activity.
+- **Public Landing Experience (`/`):** Project overview, capability cards, educational class breakdown, model evaluation snapshot, and safety disclaimers.
+- **Interactive Classifier Workspace (`/classifier`):**
+  - **File Upload:** Drag-and-drop support for `.csv`, `.txt`, and `.npy` files. Handles single beats and batches up to 5,000 beats.
+  - **Manual Sample Entry:** Text area accepting comma-, space-, or semicolon-separated values with live counter (`X / 77 samples`).
+  - **Preloaded Reference Demo:** Direct selection of verified reference samples from `models/demo_beats.npz`.
+  - **Single-Beat Inspection:** Prominent predicted class badge, top model score, 4-class calibrated horizontal bar chart, and interactive 77-sample waveform with R-peak fiducial alignment line.
+  - **Batch Analysis & Export:** Searchable, class-filterable results table, modal waveform inspector for any row, and instant CSV export.
+- **Methodology & Architecture (`/about`):** Detailed 1D CNN layer diagram, patient-independent stratification mechanics, evaluation trade-offs, and project limitations.
 
-Automated heartbeat classification is challenging for several reasons:
-
-- ECG signals contain noise and variations in morphology.
-- Heartbeat classes can have substantially different numbers of examples.
-- Rare arrhythmia classes may be underrepresented in the training data.
-- A model can achieve high overall accuracy while performing poorly on minority classes.
-- Evaluation must avoid patient-level data leakage to estimate generalisation more reliably.
-
-The project aims to develop a machine-learning pipeline that:
-
-1. Processes ECG recordings and extracts individual heartbeat segments.
-2. Maps annotated beats into four target classes.
-3. Addresses the severe class imbalance in the training data.
-4. Trains and evaluates a 1D CNN using patient-independent data splits.
-5. Deploys the selected model through an interactive Streamlit application.
+---
 
 ## 3. System Architecture
 
-### 3.1 End-to-end workflow
-
-The following diagram shows the main data and application workflow.
-
-```mermaid
-flowchart TD
-    A["ECG Recordings"] --> B["Signal Preprocessing"]
-    B --> C["R-Peak / Beat Segmentation"]
-    C --> D["77-Sample Beat Windows"]
-    D --> E["Annotation Mapping"]
-    E --> F["Patient-Independent Splitting"]
-
-    F --> G["Original Training Split"]
-    F --> H["Original Validation Split"]
-    F --> I["Untouched Test Split"]
-
-    G --> J["Balancing and Augmentation"]
-    J --> K["Balanced Training Dataset"]
-    K --> L["Train 1D CNN"]
-
-    H --> M["Validation and Calibration"]
-    L --> M
-    M --> N["ECG-Guard V3"]
-    I --> O["Final Held-Out Evaluation"]
-    N --> O
-
-    N --> P["Export Model and Configuration"]
-    P --> Q["Streamlit Application"]
-    Q --> R["Upload / Demo ECG Beat"]
-    R --> S["Prediction and Class Probabilities"]
+```text
+┌────────────────────────────────────────────────────────┐
+│               React + TypeScript Frontend              │
+│       Vite • Tailwind CSS • Lucide Icons • Recharts     │
+└───────────────────────────┬────────────────────────────┘
+                            │ REST API Requests
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                 FastAPI Python Backend                 │
+│      - Input Parser & Validator (.csv, .txt, .npy)     │
+│      - Model Service (TensorFlow Keras / PyTorch native)│
+│      - Prior Calibration Engine (alpha = 0.175)        │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                   Model & Artefacts                    │
+│   • models/ecg_guard_final.keras (1D-CNN weights)      │
+│   • deployment_config.json (parameters & test metrics) │
+│   • models/demo_beats.npz (verified reference samples) │
+└────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Model architecture
+---
 
-ECG-Guard V3 uses a waveform-only 1D CNN. The input shape is `(77, 1)`.
+## 4. Dataset & Signal Preprocessing
 
-```mermaid
-flowchart TD
-    A["Input ECG Beat<br/>(77 × 1)"] --> B["Conv1D — 32 Filters"]
-    B --> C["Batch Normalisation + ReLU"]
-    C --> D["Max Pooling"]
-    D --> E["Conv1D — 64 Filters"]
-    E --> F["Batch Normalisation + ReLU"]
-    F --> G["Max Pooling"]
-    G --> H["Conv1D — 128 Filters"]
-    H --> I["Batch Normalisation + ReLU"]
-    I --> J["Global Average Pooling"]
-    J --> K["Dense — 64 Units"]
-    K --> L["Dropout"]
-    L --> M["Softmax — 4 Classes"]
-    M --> N["Predicted Heartbeat Class"]
+The model was developed using three established PhysioNet databases:
+1. **MIT-BIH Arrhythmia Database (`mitdb`):** 48 ambulatory recordings (360 Hz). Records 201 and 202 are unified into one patient identity.
+2. **St. Petersburg INCART 12-Lead Arrhythmia Database (`incartdb`):** 75 records (257 Hz) mapped via header comments to 32 patient identities.
+3. **MIT-BIH Supraventricular Arrhythmia Database (`svdb`):** 78 records preserved as an unverified external holdout.
+
+### Signal Preprocessing Pipeline:
+- **Bandpass Filter:** 4th-order zero-phase Butterworth filter (0.5 – 40.0 Hz).
+- **Resampling:** Rational polyphase resampling (`resample_poly`) to a uniform **128 Hz**.
+- **Window Extraction:** 77 samples captured around the R-peak (26 samples before, 51 samples after, corresponding to ~600 ms).
+- **Normalization:** Per-beat Z-score normalization `(x - mean) / std`, clipped to `[-5, +5]`.
+- **Training Balance:** 3,000 beats per class using patient-aware weighted jittering, scaling, and Gaussian noise. Test sets remain completely unaugmented and natural.
+
+---
+
+## 5. Model Architecture & Calibration
+
+### 1D CNN Architecture
+```text
+Input: (Batch, 77, 1)
+  │
+  ├─► Conv1D(32, kernel=7, padding="same") ─► BatchNorm(eps=0.001) ─► ReLU ─► MaxPool1D(2)
+  │
+  ├─► Conv1D(64, kernel=5, padding="same") ─► BatchNorm(eps=0.001) ─► ReLU ─► MaxPool1D(2)
+  │
+  ├─► Conv1D(128, kernel=3, padding="same") ─► BatchNorm(eps=0.001) ─► ReLU
+  │
+  ├─► GlobalAveragePooling1D() ─► (Batch, 128)
+  │
+  ├─► Dense(64, activation="relu") ─► Dropout(0.35)
+  │
+  └─► Dense(4, activation="softmax") ─► Output: [P_Normal, P_SVEB, P_VEB, P_Fusion]
 ```
 
-**Architecture summary:**
+### Probability Calibration
+To counter extreme clinical class imbalance, raw probabilities are adjusted using the validation-selected prior ratio:
+$$\tilde{P}_c = P_c \times (\text{ratio}_c)^\alpha, \quad \text{where } \alpha = 0.175$$
+Normalized so that $\sum \tilde{P}_c = 1.0$.
 
-`Input → Conv1D(32) → BatchNorm/ReLU → MaxPool → Conv1D(64) → BatchNorm/ReLU → MaxPool → Conv1D(128) → BatchNorm/ReLU → GlobalAveragePooling → Dense(64) → Dropout → Softmax(4)`
+---
 
-The final deployed model uses ECG waveform samples only. RR-interval features were explored during development but are not inputs to this selected deployment model.
-
-### 3.3 Prediction workflow
-
-```mermaid
-flowchart TD
-    A["User uploads CSV / TXT / NPY"] --> B["Validate input dimensions"]
-    B --> C["Check 77 samples per beat"]
-    C --> D["Load trained ECG-Guard V3"]
-    D --> E["Generate class probabilities"]
-    E --> F["Apply validation-selected prior calibration"]
-    F --> G["Select highest-probability class"]
-    G --> H["Display prediction, score and waveform"]
-    H --> I["Optional batch results CSV"]
-```
-
-## 4. Dataset
-
-### 4.1 Original dataset
-
-The primary original reference dataset for this project is the **MIT-BIH Arrhythmia Database**, available through PhysioNet.
-
-- **Dataset:** [MIT-BIH Arrhythmia Database](https://physionet.org/content/mitdb/1.0.0/)
-- **Additional recordings in the processed V3 build:** [St Petersburg INCART 12-lead Arrhythmia Database](https://physionet.org/content/incartdb/1.0.0/)
-
-The processed V3 manifest contained **123 recordings: 48 MIT-BIH recordings and 75 INCART recordings**. The MIT-BIH Arrhythmia Database is the original dataset reference; the additional INCART recordings were included in the processed V3 data build.
-
-### 4.2 Why a balanced dataset was created
-
-The original heartbeat data was highly imbalanced. Normal beats formed the majority of the dataset, while Supraventricular and Fusion beats were much less frequent.
-
-Training directly on this distribution can bias a model towards the majority class. A model may then achieve seemingly good accuracy while failing to recognise rare heartbeat categories.
-
-To address this issue, a **separate balanced training dataset was generated and saved in different files**. The model was trained using these balanced training files rather than the original imbalanced training arrays.
-
-### 4.3 Balanced training dataset
-
-The balanced training dataset contains **12,000 beats**, with exactly **3,000 samples per class**.
-
-| Heartbeat class | Balanced training samples |
-|---|---:|
-| Normal | 3,000 |
-| Supraventricular | 3,000 |
-| Ventricular | 3,000 |
-| Fusion | 3,000 |
-| **Total** | **12,000** |
-
-The balancing process used:
-
-- **Undersampling** to reduce the overrepresented classes to the target count.
-- **Data augmentation** to increase the Fusion class to the target count.
-- The Fusion set contained 559 original examples and 2,441 augmented examples.
-- Augmentation operations included controlled time shifting, amplitude variation, and noise addition.
-
-The balanced arrays were saved separately:
-
-- `X_train_balanced_v3.npy`
-- `y_train_balanced_v3.npy`
-
-The accompanying balancing metadata and report were saved as:
-
-- `balanced_training_metadata_v3.csv`
-- `balancing_report_v3.csv`
-
-### 4.4 Train, validation and test split
-
-The processed V3 dataset was divided into patient-independent splits. The original validation and test sets were **not balanced or augmented**. They retained their natural class distributions so that evaluation would reflect the original data distribution.
-
-| Split | Number of beats | Usage |
-|---|---:|---|
-| Original training split | 188,825 | Source for balanced training data |
-| Balanced training data | 12,000 | Used to train ECG-Guard V3 |
-| Validation split | 40,663 | Model selection and calibration |
-| Test split | 44,534 | Final held-out evaluation |
-
-**Important data-handling principle:** balancing was applied only to the training data. The validation and test datasets were kept separate and untouched by the balancing process. Patient-independent splitting was used to reduce the risk of the same patient's beats appearing across training, validation, and test splits.
-
-### 4.5 Natural test-set class distribution
-
-The complete held-out test set contained the following class distribution:
-
-| Class | Test samples |
-|---|---:|
-| Normal | 39,798 |
-| Supraventricular | 572 |
-| Ventricular | 4,114 |
-| Fusion | 50 |
-| **Total** | **44,534** |
-
-This distribution is intentionally shown in its original, imbalanced form. It is important when interpreting accuracy and minority-class performance.
-
-### 4.6 Data preprocessing
-
-The processed V3 pipeline used the following main steps:
-
-1. Read ECG signals and their beat annotations.
-2. Select the available ECG lead (MLII was preferred for MIT-BIH, with a configured fallback; lead II was used for INCART).
-3. Resample the signals to **128 Hz**.
-4. Apply a fourth-order Butterworth band-pass filter with a **0.5–40 Hz** passband using zero-phase filtering.
-5. Segment each heartbeat using a window of approximately **0.2 seconds before** and **0.4 seconds after** the annotated R-peak.
-6. Represent each heartbeat using **77 samples**.
-7. Map annotations into Normal, Supraventricular, Ventricular, and Fusion classes.
-
-### 4.7 Dataset balancing workflow
-
-```mermaid
-flowchart TD
-    A["Original Training Data<br/>188,825 beats"] --> B["Class Distribution Analysis"]
-    B --> C["Separate Classes"]
-    C --> D["Undersample Normal"]
-    C --> E["Undersample Supraventricular"]
-    C --> F["Undersample Ventricular"]
-    C --> G["Fusion: 559 Original Beats"]
-    G --> H["Time Shift + Amplitude Variation + Noise"]
-    D --> I["3,000 Normal"]
-    E --> J["3,000 Supraventricular"]
-    F --> K["3,000 Ventricular"]
-    H --> L["3,000 Fusion"]
-    I --> M["Balanced Training Dataset"]
-    J --> M
-    K --> M
-    L --> M
-    M --> N["12,000 Beats — 3,000 per Class"]
-```
-
-## 5. Features
-
-### Machine Learning
-
-- Four-class ECG heartbeat classification.
-- 1D CNN-based waveform classification.
-- Separate balanced training dataset.
-- Minority-class augmentation.
-- Patient-independent train, validation and test splitting.
-- Validation-based prior calibration.
-
-### Streamlit Application
-
-- Upload a preprocessed ECG beat in `.csv`, `.txt`, or `.npy` format.
-- Classify one beat or multiple beats in a batch.
-- Paste 77 numeric sample values directly into the application.
-- Explore built-in example beats when `demo_beats.npz` is available.
-- View the predicted heartbeat class and model score.
-- Visualise class probabilities.
-- View the uploaded ECG waveform.
-- Download batch prediction results as a CSV file.
-
-## 6. Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| Python | Main programming language |
-| TensorFlow | Deep learning framework |
-| Keras | 1D CNN model development and inference |
-| NumPy | Numerical operations and ECG arrays |
-| Pandas | Dataset handling and prediction tables |
-| SciPy | ECG signal filtering and signal processing |
-| WFDB | Reading ECG records and annotations |
-| scikit-learn | Dataset splitting and evaluation metrics |
-| Matplotlib | Signal and evaluation visualisation |
-| Streamlit | Interactive web application |
-
-## 7. Project Structure
-
-### 7.1 Streamlit deployment folder
+## 6. Project Structure
 
 ```text
-ECG_Guard_Streamlit/
+ECG-Guard/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── endpoints.py         # REST API routes (/predict, /health, etc.)
+│   │   ├── core/
+│   │   │   └── config.py            # Environment configuration & path resolvers
+│   │   ├── schemas/
+│   │   │   └── prediction.py        # Pydantic schemas for requests & responses
+│   │   ├── services/
+│   │   │   ├── input_parser.py      # Robust parser for CSV, TXT, NPY & text
+│   │   │   ├── model_service.py     # Dual model loader (TensorFlow + PyTorch)
+│   │   │   └── prediction_service.py# Calibration & batch prediction logic
+│   │   └── main.py                  # FastAPI application & SPA static server
+│   └── requirements.txt             # Python backend dependencies
 │
-├── app.py
-├── requirements.txt
-├── README.md
-├── deployment_config.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/              # WaveformChart, ProbabilityBarChart, etc.
+│   │   ├── pages/                   # HomePage, ClassifierPage, AboutPage
+│   │   ├── services/                # API client with error handling
+│   │   ├── types/                   # TypeScript interfaces
+│   │   ├── styles/                  # Tailwind base & theme CSS
+│   │   ├── App.tsx                  # Root layout & route coordinator
+│   │   └── main.tsx                 # React entry point
+│   ├── package.json                 # Node dependencies
+│   └── vite.config.ts               # Vite build & proxy settings
 │
-└── models/
-    ├── ecg_guard_final.keras
-    └── demo_beats.npz          # Optional demo examples
+├── models/
+│   ├── ecg_guard_final.keras        # Trained V3 model weights & architecture
+│   └── demo_beats.npz               # 4 verified reference heartbeat samples
+│
+├── tests/
+│   ├── run_tests.py                 # Async backend test runner
+│   └── test_backend.py              # Test cases (10 passed)
+│
+├── deployment_config.json           # Model metadata, priors & recorded metrics
+├── app.py                           # Legacy Streamlit prototype
+├── requirements.txt                 # Root dependencies
+└── README.md
 ```
 
-| File | Purpose |
-|---|---|
-| `app.py` | Streamlit interface, input validation and model inference |
-| `requirements.txt` | Python dependencies for the application |
-| `deployment_config.json` | Model metadata, class names and validation-selected calibration settings |
-| `models/ecg_guard_final.keras` | Trained ECG-Guard V3 model |
-| `models/demo_beats.npz` | Example beats used by the demo tab |
+---
 
-### 7.2 Important training and dataset artifacts
-
-The processed dataset was stored separately from the Streamlit application, under the `processed_v3` directory.
-
-```text
-processed_v3/
-│
-├── X_train_balanced_v3.npy
-├── y_train_balanced_v3.npy
-│
-├── X_validation_v3.npy
-├── y_validation_v3.npy
-├── X_test_v3.npy
-├── y_test_v3.npy
-│
-├── beat_metadata_v3.csv
-├── balanced_training_metadata_v3.csv
-├── balancing_report_v3.csv
-│
-├── ecg_guard_final.keras
-├── best_ecg_guard_v3.keras
-│
-└── streamlit_deployment/
-    ├── ecg_guard_final.keras
-    ├── deployment_config.json
-    ├── demo_beats.npz
-    └── test_metrics.json
-```
-
-The large dataset arrays and model files are generated artifacts and may be stored separately from the source-code repository.
-
-## 8. Installation
+## 7. Installation & Setup
 
 ### Prerequisites
+- **Python:** 3.11 or 3.12
+- **Node.js:** 18+ (Node 20 or 22 recommended)
 
-- Python **3.12** recommended.
-- pip.
-- Git (optional, for cloning the repository).
-- The trained model file `ecg_guard_final.keras`.
-- The deployment configuration file `deployment_config.json`.
-
-### Step 1: Clone the repository
-
+### 1. Clone the repository
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd ECG_Guard_Streamlit
+git clone https://github.com/your-username/ECG-Guard.git
+cd ECG-Guard
 ```
 
-If you already have the project folder, simply open a terminal in that directory.
-
-### Step 2: Create a virtual environment
-
-Linux / macOS:
-
+### 2. Python Backend Setup
+Install the backend dependencies:
 ```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
+pip install -r backend/requirements.txt
 ```
 
-Windows:
-
-```powershell
-py -3.12 -m venv .venv
-.venv\Scripts\activate
-```
-
-### Step 3: Upgrade pip
-
+### 3. Frontend Setup
+Install frontend npm packages and build the production bundle:
 ```bash
-python -m pip install --upgrade pip
+cd frontend
+npm install
+npm run build
+cd ..
 ```
 
-### Step 4: Install dependencies
+---
 
+## 8. How to Run
+
+### Option A: Unified Production Server (Recommended)
+Once the frontend is built (`npm run build` inside `frontend/`), FastAPI serves both the API and the React web application on a single port:
 ```bash
-pip install -r requirements.txt
+python backend/app/main.py
+```
+Open **[http://localhost:8000](http://localhost:8000)** in your browser.
+
+### Option B: Full-Stack Development Mode
+Run the backend and frontend in separate terminals:
+
+**Terminal 1 (FastAPI Backend):**
+```bash
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### Deployment requirements
-
-The application runtime uses the following dependencies:
-
-```text
-streamlit>=1.40,<2
-tensorflow==2.21.0
-numpy>=1.26,<2.2
-pandas>=2.0,<3
+**Terminal 2 (Vite React Frontend):**
+```bash
+cd frontend
+npm run dev
 ```
+Open **[http://localhost:5173](http://localhost:5173)** in your browser. API requests are automatically proxied to the backend at port 8000.
 
-Signal-processing and training dependencies such as WFDB, SciPy, and scikit-learn are needed when reproducing the data-preparation or model-training pipeline; they are not required for the basic Streamlit inference workflow.
-
-### Step 5: Add model files
-
-Make sure the trained model is placed at:
-
-```text
-models/ecg_guard_final.keras
-```
-
-Place `deployment_config.json` in the project root. If you want to use the demo tab, also place `demo_beats.npz` inside `models/`.
-
-## 9. How to Run
-
-After installing the dependencies and adding the model files, run:
-
+### Option C: Legacy Streamlit Prototype
 ```bash
 streamlit run app.py
 ```
 
-Streamlit will display a local URL in the terminal, usually:
+---
 
-```text
-http://localhost:8501
+## 9. REST API Documentation
+
+FastAPI automatically provides interactive Swagger documentation at **`http://localhost:8000/docs`**.
+
+### Endpoints:
+
+#### `GET /api/health`
+Returns system status and model readiness.
+```json
+{
+  "status": "ok",
+  "model_loaded": true,
+  "model_name": "ECG-Guard V3",
+  "message": null
+}
 ```
 
-Open the URL in your browser to use ECG-Guard.
+#### `GET /api/model-info`
+Returns model architecture, 4-class ordering, calibration parameters, and recorded test metrics.
 
-To stop the application, press `Ctrl + C` in the terminal.
+#### `POST /api/predict`
+Accepts a JSON array of beats (each with exactly 77 numeric samples):
+```json
+{
+  "signals": [
+    [-0.05, 0.02, ..., 0.12]
+  ]
+}
+```
+Returns structured predictions, top model score, and calibrated 4-class probabilities.
 
-## 10. Usage
+#### `POST /api/predict/file`
+Multipart upload supporting `.csv`, `.txt`, and `.npy` files containing up to 5,000 beats.
 
-### Option 1: Upload a single ECG beat
+#### `GET /api/demo-beats`
+Returns the 4 reference demonstration beats from `demo_beats.npz` with ground-truth classes.
 
-1. Open the **Classify ECG beat** tab.
-2. Upload a `.csv`, `.txt`, or `.npy` file.
-3. Ensure the file contains exactly 77 numeric samples for one beat.
-4. Click **Run ECG classification**.
-5. View the predicted class, model score, class probabilities, and ECG waveform.
+---
 
-### Option 2: Batch classification
+## 10. Automated Testing
 
-For batch prediction, provide one beat per row, with 77 numeric values in each row.
-
-Example CSV structure:
-
-```csv
-0.02,0.05,0.11,0.18,0.24,...,0.03
-0.01,0.04,0.10,0.16,0.22,...,0.02
-0.03,0.06,0.12,0.19,0.25,...,0.04
+Run the complete backend test suite:
+```bash
+python tests/run_tests.py
 ```
 
-Each row must contain exactly 77 values. The application displays the predictions in a table and provides an option to download the results as a CSV file.
+**Test Coverage:**
+- Service health & model preloading
+- Model information & disclaimer verification
+- Reference demo beats loading & signal validation
+- Single-beat inference and probability summation to 1.0
+- Batch inference across multiple heartbeats
+- 77-sample length enforcement (rejects invalid sample counts)
+- Rejection of NaN and infinite values
+- Multipart CSV file parsing
+- Multipart binary NPY file parsing
+- Rejection of unsupported file formats
 
-### Option 3: Paste values manually
+---
 
-1. Open the **Classify ECG beat** tab.
-2. Expand the manual input section.
-3. Paste exactly 77 comma- or space-separated numeric values.
-4. Click **Run ECG classification**.
+## 11. Model Evaluation Results
 
-### Option 4: Try a demo beat
+Evaluation performed on the complete, untouched, patient-independent **44,534-beat test set**:
 
-Open the **Try a demo beat** tab, select an available example, and click **Classify selected demo beat**.
+| Metric | Raw V3 Model | Prior-Calibrated V3 ($\alpha = 0.175$) |
+|---|---:|---:|
+| **Overall Accuracy** | **78.08%** | **86.55%** |
+| **Balanced Accuracy** | **59.21%** | **60.11%** |
+| **Macro Precision** | **40.34%** | **40.65%** |
+| **Macro Recall** | **59.21%** | **60.11%** |
+| **Macro F1-Score** | **40.73%** | **42.45%** |
 
-### Input format limitation
+*Note: Raw overall accuracy reflects the natural ~88% dominance of Normal beats. Balanced accuracy and Macro F1 provide an honest reflection of minority ectopic beat recognition.*
 
-The current Streamlit application expects an **already-preprocessed and beat-segmented waveform of 77 samples**.
+---
 
-It does not currently accept a raw 10-second ECG recording or a WFDB `.dat` / `.hea` record pair. R-peak detection, filtering, and raw-recording preprocessing are part of the dataset preparation workflow, not the deployed application.
+## 12. Project Contributors
 
-## 11. Model Evaluation
-
-### 11.1 Model selection
-
-ECG-Guard V3 was selected after comparing model versions on a 3,000-sample stratified validation subset.
-
-| Model | Validation accuracy | Balanced accuracy | Macro F1 |
-|---|---:|---:|---:|
-| **ECG-Guard V3** | **65.97%** | 55.38% | **45.81%** |
-| ECG-Guard V4 | 63.57% | **57.96%** | 45.56% |
-
-V3 was selected based on its stronger validation accuracy and Macro F1. The separate full-data experiment was not retained because it showed substantial training/validation overfitting.
-
-### 11.2 Final held-out test results
-
-The selected ECG-Guard V3 model was evaluated on the complete, original **44,534-beat test set**.
-
-<details>
-<summary><strong>Recorded full-test metrics — raw model predictions</strong></summary>
-
-| Evaluation metric | Result |
-|---|---:|
-| Accuracy | **78.08%** |
-| Balanced Accuracy | **59.21%** |
-| Macro Precision | **40.34%** |
-| Macro Recall | **59.21%** |
-| Macro F1-score | **40.73%** |
-
-</details>
-
-The validation-selected prior calibration strength used by the deployed application is **α = 0.175**. Calibration was selected using validation data, not by tuning against the held-out test set.
-
-### 11.3 Interpreting the results
-
-- The 78.08% accuracy indicates the proportion of correctly classified beats across the complete test set.
-- Balanced accuracy and Macro F1 are important because the test set is highly imbalanced.
-- The model performs better on some classes than on rare classes.
-- Minority-class recognition, particularly for Supraventricular and Fusion beats, remains a key limitation.
-
-**The reported metrics should not be interpreted as evidence of clinical reliability.** Further validation on independent datasets and clinical review would be required before any real-world medical use.
-
-## 12. Sample Output
-
-The Streamlit application displays the predicted class, model score, probability distribution, and input waveform.
-
-### Illustrative prediction format
-
-> The values below demonstrate the output layout only. They are not a recorded test prediction.
-
-| Output field | Illustrative value |
+| Contributor | Enrollment Number |
 |---|---|
-| Predicted beat class | Normal |
-| Model score | 82.0% |
-| Normal probability | 82.0% |
-| Supraventricular probability | 8.0% |
-| Ventricular probability | 7.0% |
-| Fusion probability | 3.0% |
-
-A batch prediction table contains:
-
-| Beat | Prediction | Model score |
-|---:|---|---:|
-| 1 | Normal | 82.0% |
-| 2 | Ventricular | 76.0% |
-| 3 | Supraventricular | 68.0% |
-
-*All values in these sample tables are illustrative. Actual predictions depend on the uploaded ECG beat.*
-
-## 13. Future Improvements
-
-- Improve minority-class recognition, especially Supraventricular and Fusion beats.
-- Explore focal loss, class-aware sampling, and improved augmentation strategies.
-- Evaluate alternative architectures such as residual CNNs, CNN-LSTM, and attention-based models.
-- Add raw ECG recording support with automatic filtering, R-peak detection, and beat segmentation.
-- Support WFDB `.dat` and `.hea` inputs.
-- Expand external validation across more patients and datasets.
-- Improve confidence estimation and probability calibration.
-- Add model explainability and beat-level visual interpretation.
-- Conduct rigorous clinical validation before considering any clinical application.
-
-## 14. Skills Demonstrated
-
-- ECG signal processing and biomedical data handling.
-- Working with PhysioNet ECG datasets and WFDB.
-- Digital filtering and heartbeat segmentation.
-- Handling highly imbalanced datasets.
-- Undersampling and minority-class data augmentation.
-- Patient-independent dataset splitting.
-- Deep learning with TensorFlow and Keras.
-- 1D CNN architecture design and model selection.
-- Classification evaluation using Accuracy, Balanced Accuracy, Precision, Recall, and Macro F1.
-- Probability calibration and inference pipelines.
-- Streamlit application development.
-- Model export, dependency management, and deployment.
-
-## 15. Author
-
-### Project Contributors
-
-| Name | Enrollment number |
-|---|---|
-| Samarth Gupta | 24/11/EE/012 |
-| Ramji | 24/11/EC/025 |
-| Devananda Sreekumar | 24/11/EE/036 |
-| Priyanshu Kumar Ajariwal | 24/11/EE/005 |
+| **Samarth Gupta** | 24/11/EE/012 |
+| **Ramji** | 24/11/EC/025 |
+| **Devananda Sreekumar** | 24/11/EE/036 |
+| **Priyanshu Kumar Ajariwal** | 24/11/EE/005 |
 
 ---
 
 <div align="center">
 
-**ECG-Guard - AI-assisted ECG heartbeat classification**
-
-*Built as an academic machine-learning and software deployment project.*
-
-**For research and educational use only. Not for clinical diagnosis.**
+**ECG-Guard — AI-Assisted ECG Heartbeat Classification**  
+*Academic & Educational Research Project.*
 
 </div>
